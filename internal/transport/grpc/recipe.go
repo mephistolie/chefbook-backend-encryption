@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-common/subscription"
 	api "github.com/mephistolie/chefbook-backend-encryption/api/proto/implementation/v1"
 )
 
@@ -78,10 +79,6 @@ func (s *EncryptionServer) RequestRecipeKeyAccess(_ context.Context, req *api.Re
 }
 
 func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKeyRequest) (*api.SetRecipeKeyResponse, error) {
-	userId, err := uuid.Parse(req.UserId)
-	if err != nil {
-		return nil, fail.GrpcInvalidBody
-	}
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -89,6 +86,17 @@ func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKey
 	requesterId, err := uuid.Parse(req.RequesterId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
+	}
+
+	userId := requesterId
+	if req.UserId != nil {
+		if userId, err = uuid.Parse(*req.UserId); err != nil {
+			return nil, fail.GrpcInvalidBody
+		}
+	}
+
+	if s.checkSubscription && !subscription.IsPremium(req.SubscriptionPlan) {
+		return nil, fail.GrpcPremiumRequired
 	}
 
 	if err = s.service.SetRecipeKey(recipeId, userId, req.EncryptedKey, requesterId); err != nil {

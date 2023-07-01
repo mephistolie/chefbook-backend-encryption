@@ -15,6 +15,8 @@ require (
 	github.com/mephistolie/chefbook-backend-common/random v0.7.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
+	github.com/mephistolie/chefbook-backend-common/subscription v0.8.0
+	github.com/mephistolie/chefbook-backend-encryption/api v1.0.0
 	github.com/mephistolie/chefbook-backend-profile/api v1.2.3
 	github.com/mephistolie/chefbook-backend-recipe/api v1.1.6
 	github.com/peterbourgon/ff/v3 v3.3.0

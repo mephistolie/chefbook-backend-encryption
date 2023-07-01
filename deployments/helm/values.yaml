@@ -13,6 +13,8 @@ config:
   # Leave empty for stdout only
   logsPath: ""
 
+  checkSubscription: true
+
   postgres:
     host: ""
     port: 5432

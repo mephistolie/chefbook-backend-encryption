@@ -5,9 +5,10 @@ option go_package = "github.com/mephistolie/chefbook-backend-encryption/api/prot
 
 message SetRecipeKeyRequest {
   string recipeId = 1;
-  string userId = 2;
+  optional string userId = 2;
   string requesterId = 3;
   bytes encryptedKey = 4;
+  string subscriptionPlan = 5;
 }
 
 message SetRecipeKeyResponse {

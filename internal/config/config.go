@@ -15,6 +15,8 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
+	Encryption Encryption
+
 	AuthService    AuthService
 	ProfileService ProfileService
 	RecipeService  RecipeService
@@ -22,6 +24,10 @@ type Config struct {
 	Database Database
 	Amqp     amqpConfig.Amqp
 	Smtp     Smtp
+}
+
+type Encryption struct {
+	CheckSubscription *bool
 }
 
 type AuthService struct {

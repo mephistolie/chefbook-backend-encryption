@@ -41,6 +41,9 @@ spec:
             - name: LOGS_PATH
               value: {{ .Values.config.logsPath }}
 
+            - name: CHECK_SUBSCRIPTION
+              value: {{ .Values.config.checkSubscription | quote }}
+
             # Auth Microservice
 
             - name: AUTH_ADDR

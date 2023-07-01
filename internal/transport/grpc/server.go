@@ -7,9 +7,13 @@ import (
 
 type EncryptionServer struct {
 	api.UnsafeEncryptionServiceServer
-	service service.Encryption
+	service           service.Encryption
+	checkSubscription bool
 }
 
-func NewServer(service service.Encryption) *EncryptionServer {
-	return &EncryptionServer{service: service}
+func NewServer(service service.Encryption, checkSubscription bool) *EncryptionServer {
+	return &EncryptionServer{
+		service:           service,
+		checkSubscription: checkSubscription,
+	}
 }
