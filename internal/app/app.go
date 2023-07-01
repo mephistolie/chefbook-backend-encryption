@@ -67,7 +67,7 @@ func Run(cfg *config.Config) {
 	)
 
 	healthServer := health.NewServer()
-	encryptionServer := encryption.NewServer(encryptionService.Encryption)
+	encryptionServer := encryption.NewServer(encryptionService.Encryption, *cfg.Encryption.CheckSubscription)
 
 	go monitorHealthChecking(db, healthServer)
 
