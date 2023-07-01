@@ -5,7 +5,7 @@ option go_package = "github.com/mephistolie/chefbook-backend-encryption/api/prot
 
 message DeleteRecipeKeyRequest {
   string recipeId = 1;
-  string userId = 2;
+  optional string userId = 2;
   string requesterId = 3;
 }
 

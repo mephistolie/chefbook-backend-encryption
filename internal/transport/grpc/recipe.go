@@ -107,10 +107,6 @@ func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKey
 }
 
 func (s *EncryptionServer) DeleteRecipeKey(_ context.Context, req *api.DeleteRecipeKeyRequest) (*api.DeleteRecipeKeyResponse, error) {
-	userId, err := uuid.Parse(req.UserId)
-	if err != nil {
-		return nil, fail.GrpcInvalidBody
-	}
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -118,6 +114,13 @@ func (s *EncryptionServer) DeleteRecipeKey(_ context.Context, req *api.DeleteRec
 	requesterId, err := uuid.Parse(req.RequesterId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
+	}
+
+	userId := requesterId
+	if req.UserId != nil {
+		if userId, err = uuid.Parse(*req.UserId); err != nil {
+			return nil, fail.GrpcInvalidBody
+		}
 	}
 
 	if err = s.service.DeleteRecipeKey(recipeId, userId, requesterId); err != nil {
