@@ -1,1 +1,1 @@
-# chefbook-backend-encryption
+# ChefBook Backend Encryption Service

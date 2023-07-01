@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-encryption/api/proto/v1";
+
+message CreateEncryptedVaultRequest {
+  string userId = 1;
+  bytes publicKey = 2;
+  bytes encryptedPrivateKey = 3;
+}
+
+message CreateEncryptedVaultResponse {
+  string message = 1;
+}

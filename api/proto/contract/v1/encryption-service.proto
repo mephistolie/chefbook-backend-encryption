@@ -1,0 +1,27 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-encryption/api/proto/v1";
+
+import "v1/get-encrypted-vault-key.proto";
+import "v1/create-encrypted-vault.proto";
+import "v1/request-encrypted-vault-deletion.proto";
+import "v1/delete-encrypted-vault.proto";
+import "v1/get-recipe-key-requests.proto";
+import "v1/request-recipe-key-access.proto";
+import "v1/get-recipe-key.proto";
+import "v1/set-recipe-key.proto";
+import "v1/delete-recipe-key.proto";
+
+service EncryptionService {
+  rpc GetEncryptedVaultKey(GetEncryptedVaultKeyRequest) returns (GetEncryptedVaultKeyResponse);
+  rpc CreateEncryptedVault(CreateEncryptedVaultRequest) returns (CreateEncryptedVaultResponse);
+  rpc RequestEncryptedVaultDeletion(RequestEncryptedVaultDeletionRequest) returns (RequestEncryptedVaultDeletionResponse);
+  rpc DeleteEncryptedVault(DeleteEncryptedVaultRequest) returns (DeleteEncryptedVaultResponse);
+
+  rpc GetRecipeKeyRequests(GetRecipeKeyRequestsRequest) returns (GetRecipeKeyRequestsResponse);
+  rpc RequestRecipeKeyAccess(RequestRecipeKeyAccessRequest) returns (RequestRecipeKeyAccessResponse);
+  rpc GetRecipeKey(GetRecipeKeyRequest) returns (GetRecipeKeyResponse);
+  rpc SetRecipeKey(SetRecipeKeyRequest) returns (SetRecipeKeyResponse);
+  rpc DeleteRecipeKey(DeleteRecipeKeyRequest) returns (DeleteRecipeKeyResponse);
+}

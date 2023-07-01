@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-encryption/api/proto/v1";
+
+message DeleteRecipeKeyRequest {
+  string recipeId = 1;
+  string userId = 2;
+  string requesterId = 3;
+}
+
+message DeleteRecipeKeyResponse {
+  string message = 1;
+}
