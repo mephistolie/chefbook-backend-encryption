@@ -59,14 +59,6 @@ spec:
             - name: RECIPE_ADDR
               value: "{{ .Values.services.recipe.name }}.{{ .Values.services.recipe.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.recipe.port }}"
 
-            # Firebase
-
-            - name: FIREBASE_CREDENTIALS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.firebase.name }}
-                  key: {{ .Values.secrets.firebase.credentialsRef }}
-
             # PostgreSQL
 
             - name: DB_HOST
@@ -85,22 +77,6 @@ spec:
                   key: {{ .Values.secrets.postgres.passwordRef }}
             - name: DB_NAME
               value: {{ .Values.config.postgres.dbName }}
-
-            # S3
-
-            - name: S3_HOST
-              value: {{ .Values.config.s3.host }}
-            - name: S3_ACCESS_KEY_ID
-              value: {{ .Values.config.s3.accessKeyId }}
-            - name: S3_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.s3.name }}
-                  key: {{ .Values.secrets.s3.secretAccessKeyRef }}
-            - name: S3_BUCKET
-              value: {{ .Values.config.s3.bucket }}
-            - name: S3_REGION
-              value: {{ .Values.config.s3.region }}
 
             # RabbitMQ
 

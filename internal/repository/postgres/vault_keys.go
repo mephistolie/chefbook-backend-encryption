@@ -47,7 +47,7 @@ func (r *Repository) CreateEncryptedVault(vault entity.EncryptedVault) error {
 	return nil
 }
 
-func (r *Repository) DeleteEncryptedVault(userId uuid.UUID, deleteCode string) (*model.MessageData, error) {
+func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode string) (*model.MessageData, error) {
 	tx, err := r.startTransaction()
 	if err != nil {
 		return nil, err
@@ -64,8 +64,43 @@ func (r *Repository) DeleteEncryptedVault(userId uuid.UUID, deleteCode string) (
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	if rows, err := result.RowsAffected(); err == nil && rows == 0 {
+	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
 		return nil, encryptionFail.GrpcInvalidCode
+	}
+
+	if err = r.deleteVaultWithOwnedRecipeKeys(userId, tx); err != nil {
+		return nil, err
+	}
+
+	msg, err := r.addOutboxVaultDeletedMsg(userId, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, commitTransaction(tx)
+}
+
+func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx) error {
+	getOwnedRecipesQuery := fmt.Sprintf(`
+		SELECT recipe_id 
+		FROM %s
+		WHERE user_id=$1 AND status='%s'
+	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
+
+	rows, err := tx.Query(getOwnedRecipesQuery, userId)
+	if err != nil {
+		log.Errorf("unable to get owned recipes for user %s: %s", userId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+
+	var ownedRecipeIds []uuid.UUID
+	for rows.Next() {
+		var recipeId uuid.UUID
+		if err = rows.Scan(&recipeId); err != nil {
+			log.Errorf("unable to parse owned recipe ID for user %s: %s", userId, err)
+			continue
+		}
+		ownedRecipeIds = append(ownedRecipeIds, recipeId)
 	}
 
 	deleteVaultQuery := fmt.Sprintf(`
@@ -73,17 +108,23 @@ func (r *Repository) DeleteEncryptedVault(userId uuid.UUID, deleteCode string) (
 		WHERE user_id=$1
 	`, vaultKeysTable)
 
-	result, err = tx.Exec(deleteVaultQuery, userId)
+	_, err = tx.Exec(deleteVaultQuery, userId)
 	if err != nil {
-		log.Warnf("unable to delete profile %s key: %s", userId, err)
-		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+		log.Warnf("unable to delete profile %s encrypted vault: %s", userId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	if rows, err := result.RowsAffected(); err == nil && rows > 0 {
-		return r.addOutboxVaultDeletedMsg(userId, tx)
+	deleteOwnedRecipesQuery := fmt.Sprintf(`
+		DELETE FROM %s
+		WHERE recipe_id=ANY($1)
+	`, recipeKeysTable)
+
+	if _, err = tx.Exec(deleteOwnedRecipesQuery, ownedRecipeIds); err != nil {
+		log.Errorf("unable to delete owned recipe keys for user %s: %s", userId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return nil, nil
+	return nil
 }
 
 func (r *Repository) addOutboxVaultDeletedMsg(userId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {

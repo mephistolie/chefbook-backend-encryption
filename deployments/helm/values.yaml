@@ -18,13 +18,7 @@ config:
   postgres:
     host: ""
     port: 5432
-    dbName: chefbook-users
-
-  s3:
-    host: ""
-    accessKeyId: ""
-    bucket: images
-    region: "us-east-1"
+    dbName: chefbook-encryption
 
   rabbitmq:
     name: ""
@@ -53,17 +47,10 @@ services:
     port: 8080
 
 secrets:
-  firebase:
-    name: firebase-secrets
-    credentialsRef: credentials
   postgres:
     name: postgres-secrets
     userRef: user
     passwordRef: password
-  s3:
-    name: s3-secrets
-    accessKeyIdRef: accessKeyId
-    secretAccessKeyRef: secretAccessKey
   rabbitmq:
     name: rabbitmq-secrets
     userRef: user

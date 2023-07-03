@@ -41,7 +41,7 @@ func (s *Service) handleRecipeDeletedMsg(messageId uuid.UUID, data []byte) error
 	}
 
 	log.Infof("deleting recipe %s key...", body.RecipeId)
-	return s.repo.DeleteRecipeKey(body.RecipeId, messageId)
+	return s.repo.DeleteRecipeKeys(body.RecipeId, messageId)
 }
 
 func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) error {

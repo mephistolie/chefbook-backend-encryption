@@ -71,6 +71,7 @@ func (c Config) Print() {
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
 		"Auth Service Address: %v\n\n"+
+		"Profile Service Address: %v\n\n"+
 		"Recipe Service Address: %v\n\n"+
 		"Database host: %v\n"+
 		"Database port: %v\n"+
@@ -81,7 +82,7 @@ func (c Config) Print() {
 		"SMTP host: %v\n"+
 		"SMTP port: %v\n\n",
 		*c.Environment, *c.Port, *c.LogsPath,
-		*c.AuthService.Addr, *c.RecipeService.Addr,
+		*c.AuthService.Addr, *c.ProfileService.Addr, *c.RecipeService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
 		*c.Smtp.Host, *c.Smtp.Port,

@@ -10,7 +10,7 @@ type Encryption interface {
 	GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault
 	CreateEncryptedVault(vault entity.EncryptedVault) error
 	CreateVaultDeletionRequest(userId uuid.UUID) (string, error)
-	DeleteEncryptedVault(userId uuid.UUID, deleteCode string) (*model.MessageData, error)
+	ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode string) (*model.MessageData, error)
 
 	GetRecipeKeyRequests(recipeId uuid.UUID, ownerId uuid.UUID) []entity.RecipeKeyRequest
 	GetRecipeKey(recipeId, userId uuid.UUID) *[]byte
@@ -20,6 +20,6 @@ type Encryption interface {
 	DeclineRecipeKeyAccessForUser(recipeId, userId uuid.UUID) error
 	DeleteRecipeAuthorKey(recipeId, userId uuid.UUID) error
 
-	DeleteRecipeKey(recipeId, messageId uuid.UUID) error
+	DeleteRecipeKeys(recipeId, messageId uuid.UUID) error
 	DeleteProfile(userId, messageId uuid.UUID) error
 }

@@ -18,20 +18,14 @@ func (r *Repository) DeleteProfile(userId, messageId uuid.UUID) error {
 		}
 	}
 
-	query := fmt.Sprintf(`
-		DELETE FROM %s
-		WHERE user_id=$1
-	`, vaultKeysTable)
-
-	if _, err = tx.Exec(query, userId); err != nil {
-		log.Warnf("unable to delete vault for user %s: %s", userId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	if err = r.deleteVaultWithOwnedRecipeKeys(userId, tx); err != nil {
+		return err
 	}
 
 	return commitTransaction(tx)
 }
 
-func (r *Repository) DeleteRecipeKey(recipeId, messageId uuid.UUID) error {
+func (r *Repository) DeleteRecipeKeys(recipeId, messageId uuid.UUID) error {
 	tx, err := r.handleMessageIdempotently(messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {

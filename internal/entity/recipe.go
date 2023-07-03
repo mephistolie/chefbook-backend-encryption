@@ -3,6 +3,7 @@ package entity
 import "github.com/google/uuid"
 
 const (
+	RecipeKeyRequestStatusOwned    = "owned"
 	RecipeKeyRequestStatusPending  = "pending"
 	RecipeKeyRequestStatusApproved = "approved"
 	RecipeKeyRequestStatusDeclined = "declined"

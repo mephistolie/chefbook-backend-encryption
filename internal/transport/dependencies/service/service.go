@@ -28,7 +28,7 @@ type Encryption interface {
 	GetRecipeKey(recipeId, userId uuid.UUID) *[]byte
 	RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error
 	SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error
-	DeleteRecipeKey(recipeId, userId, requesterId uuid.UUID) error
+	DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) error
 }
 
 func New(

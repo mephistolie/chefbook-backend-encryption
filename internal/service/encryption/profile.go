@@ -29,7 +29,7 @@ func (s *Service) RequestEncryptedVaultDeletion(userId uuid.UUID) error {
 }
 
 func (s *Service) DeleteEncryptedVault(userId uuid.UUID, deleteCode string) error {
-	msg, err := s.repo.DeleteEncryptedVault(userId, deleteCode)
+	msg, err := s.repo.ConfirmEncryptedVaultDeletion(userId, deleteCode)
 	if err == nil && msg != nil {
 		go s.mqPublisher.PublishMessage(msg)
 	}

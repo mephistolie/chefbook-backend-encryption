@@ -52,7 +52,7 @@ func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 	query := fmt.Sprintf(`
 		SELECT key
 		FROM %s
-		WHERE recip_id=$1 AND user_id=$2
+		WHERE recipe_id=$1 AND user_id=$2
 	`, recipeKeysTable)
 
 	row := r.db.QueryRow(query, recipeId, userId)
@@ -83,8 +83,8 @@ func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) er
 func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, key, status)
-		VALUES ($1, $2, $3, 'approved')
-	`, recipeKeysTable)
+		VALUES ($1, $2, $3, '%s')
+	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
 
 	if _, err := r.db.Exec(query, recipeId, userId, key); err != nil {
 		if isUniqueViolationError(err) {

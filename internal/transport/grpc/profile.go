@@ -9,6 +9,12 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-encryption/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
+	encryptionFail "github.com/mephistolie/chefbook-backend-encryption/internal/entity/fail"
+)
+
+const (
+	vaultPrivateKeyMinLength = 4000
+	vaultPrivateKeyMaxLength = 5000
 )
 
 func (s *EncryptionServer) GetEncryptedVaultKey(_ context.Context, req *api.GetEncryptedVaultKeyRequest) (*api.GetEncryptedVaultKeyResponse, error) {
@@ -34,11 +40,16 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 
 	log.Debugf("supplied keys length is: public - %d; private - %d", len(req.PublicKey), len(req.EncryptedPrivateKey))
 
+	privateKeyLength := len(req.EncryptedPrivateKey)
+	if privateKeyLength < vaultPrivateKeyMinLength || privateKeyLength > vaultPrivateKeyMaxLength {
+		return nil, encryptionFail.GrpcPrivateKeyLengthOutOfRange
+	}
+
 	_, err = x509.ParsePKCS1PublicKey(req.PublicKey)
 	if err != nil {
 		_, err = jwt.ParseRSAPublicKeyFromPEM(req.PublicKey)
 		if err != nil {
-			return nil, fail.GrpcInvalidBody
+			return nil, encryptionFail.GrpcInvalidPublicKey
 		}
 	}
 
@@ -71,7 +82,7 @@ func (s *EncryptionServer) RequestEncryptedVaultDeletion(_ context.Context, req 
 func (s *EncryptionServer) DeleteEncryptedVault(_ context.Context, req *api.DeleteEncryptedVaultRequest) (*api.DeleteEncryptedVaultResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil || !entity.IsDeleteCode(req.DeleteCode) {
-		return nil, fail.GrpcInvalidBody
+		return nil, encryptionFail.GrpcInvalidCode
 	}
 
 	err = s.service.DeleteEncryptedVault(userId, req.DeleteCode)

@@ -5,21 +5,21 @@ CREATE TABLE vault_keys
     private_key bytea            NOT NULL
 );
 
-CREATE TYPE recipe_key_request_status as ENUM ('approved', 'pending', 'declined');
+CREATE TYPE recipe_key_request_status as ENUM ('owned', 'approved', 'pending', 'declined');
 
 CREATE TABLE recipe_keys
 (
-    recipe_id uuid PRIMARY KEY                                  NOT NULL,
-    user_id   uuid REFERENCES users (user_id) ON DELETE CASCADE NOT NULL,
-    key       bytea                                                      DEFAULT NULL,
-    status    recipe_key_request_status                         NOT NULL DEFAULT 'pending',
+    recipe_id uuid                                                   NOT NULL,
+    user_id   uuid REFERENCES vault_keys (user_id) ON DELETE CASCADE NOT NULL,
+    key       bytea                                                           DEFAULT NULL,
+    status    recipe_key_request_status                              NOT NULL DEFAULT 'pending',
     UNIQUE (recipe_id, user_id)
 );
 
 CREATE TABLE vault_deletions
 (
-    user_id     uuid REFERENCES users (user_id) ON DELETE CASCADE NOT NULL UNIQUE,
-    delete_code VARCHAR(6)                                        NOT NULL,
+    user_id     uuid REFERENCES vault_keys (user_id) ON DELETE CASCADE NOT NULL UNIQUE,
+    delete_code VARCHAR(6)                                             NOT NULL
 );
 
 CREATE TABLE inbox
