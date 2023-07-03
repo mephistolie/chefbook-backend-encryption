@@ -82,7 +82,7 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode 
 
 func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx) error {
 	getOwnedRecipesQuery := fmt.Sprintf(`
-		SELECT recipe_id 
+		SELECT recipe_id
 		FROM %s
 		WHERE user_id=$1 AND status='%s'
 	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
@@ -124,7 +124,7 @@ func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return nil
+	return commitTransaction(tx)
 }
 
 func (r *Repository) addOutboxVaultDeletedMsg(userId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
