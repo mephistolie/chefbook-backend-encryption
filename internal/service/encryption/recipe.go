@@ -48,7 +48,7 @@ func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
-	if err != nil || policy.OwnerId != userId.String() && policy.Visibility == recipeModel.VisibilityPrivate {
+	if err != nil || !policy.IsEncrypted || policy.OwnerId != userId.String() && policy.Visibility == recipeModel.VisibilityPrivate {
 		return nil
 	}
 
