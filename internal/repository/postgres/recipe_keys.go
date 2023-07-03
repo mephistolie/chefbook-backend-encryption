@@ -8,7 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
 )
 
-func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID, ownerId uuid.UUID) []entity.RecipeKeyRequest {
+func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKeyRequest {
 	var requests []entity.RecipeKeyRequest
 
 	query := fmt.Sprintf(`
@@ -18,10 +18,10 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID, ownerId uuid.UUID)
 		LEFT JOIN
 			%[2]v ON %[1]v.user_id=%[2]v.user_id
 		WHERE
-			%[1]v.recipe_id=$1 AND %[1]v.user_id<>$2
-	`, recipeKeysTable, vaultKeysTable)
+			%[1]v.recipe_id=$1 AND %[1]v.status<>'%[3]v'
+	`, recipeKeysTable, vaultKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	rows, err := r.db.Query(query, recipeId, ownerId)
+	rows, err := r.db.Query(query, recipeId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -128,20 +128,6 @@ func (r *Repository) DeclineRecipeKeyAccessForUser(recipeId, userId uuid.UUID) e
 		}
 		log.Warnf("unable to decline recipe %s key access for user %s: %s", recipeId, userId, err)
 		return fail.GrpcNotFound
-	}
-
-	return nil
-}
-
-func (r *Repository) DeleteRecipeAuthorKey(recipeId, userId uuid.UUID) error {
-	query := fmt.Sprintf(`
-		DELETE FROM %s
-		WHERE recipe_id=$1 AND user_id=$2
-	`, recipeKeysTable)
-
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
-		log.Warnf("unable to delete recipe %s key for user %s: %s", recipeId, userId, err)
-		return fail.GrpcUnknown
 	}
 
 	return nil

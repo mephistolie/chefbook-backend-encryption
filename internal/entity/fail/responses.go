@@ -11,5 +11,6 @@ var (
 	GrpcNoVault = fail.CreateGrpcClient(fail.TypeAccessDenied, "user haven't encrypted vault")
 
 	GrpcRecipeKeyLengthOutOfRange = fail.CreateGrpcClient(fail.TypeInvalidBody, "encrypted recipe key length is out of acceptable length")
+	GrpcNoOwnerRecipeKey          = fail.CreateGrpcClient(fail.TypeAccessDenied, "recipe key must be set for owner before sharing it")
 	GrpcOwnedRecipeKeyDeletion    = fail.CreateGrpcClient(fail.TypeAccessDenied, "owned recipe key can't be deleted; delete entire recipe")
 )

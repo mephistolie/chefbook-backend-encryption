@@ -13,11 +13,11 @@ import (
 )
 
 func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error) {
-	if err := s.checkRequesterIsRecipeOwner(recipeId, userId); err != nil {
+	if err := s.checkRecipePolicy(recipeId, userId); err != nil {
 		return nil, err
 	}
 
-	requests := s.repo.GetRecipeKeyRequests(recipeId, userId)
+	requests := s.repo.GetRecipeKeyRequests(recipeId)
 
 	var profileIds []string
 	for _, request := range requests {
@@ -69,7 +69,7 @@ func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
 	if policy.OwnerId == userId.String() {
 		return nil
 	}
-	if policy.Visibility != recipeModel.VisibilityLink {
+	if !policy.IsEncrypted || policy.Visibility != recipeModel.VisibilityLink {
 		return fail.GrpcAccessDenied
 	}
 
@@ -77,7 +77,7 @@ func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
 }
 
 func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error {
-	if err := s.checkRequesterIsRecipeOwner(recipeId, requesterId); err != nil {
+	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
 		return err
 	}
 
@@ -88,12 +88,16 @@ func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requester
 	if userId == requesterId {
 		return s.repo.SetRecipeAuthorKey(recipeId, userId, key)
 	} else {
+		if ownerKey := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
+			return encryptionFail.GrpcNoOwnerRecipeKey
+		}
+
 		return s.repo.GrantRecipeKeyAccessForUser(recipeId, userId, key)
 	}
 }
 
 func (s *Service) DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) error {
-	if err := s.checkRequesterIsRecipeOwner(recipeId, requesterId); err != nil {
+	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
 		return err
 	}
 	if userId == requesterId {
@@ -103,14 +107,14 @@ func (s *Service) DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) e
 	return s.repo.DeclineRecipeKeyAccessForUser(recipeId, userId)
 }
 
-func (s *Service) checkRequesterIsRecipeOwner(recipeId, requesterId uuid.UUID) error {
+func (s *Service) checkRecipePolicy(recipeId, requesterId uuid.UUID) error {
 	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil {
 		return err
 	}
-	if policy.OwnerId != requesterId.String() {
+	if policy.OwnerId != requesterId.String() || !policy.IsEncrypted || policy.Visibility != recipeModel.VisibilityLink {
 		return fail.GrpcAccessDenied
 	}
 	return nil
