@@ -17,6 +17,17 @@ const (
 	vaultPrivateKeyMaxLength = 5000
 )
 
+func (s *EncryptionServer) HasEncryptedVault(_ context.Context, req *api.HasEncryptedVaultRequest) (*api.HasEncryptedVaultResponse, error) {
+	userId, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, fail.GrpcInvalidBody
+	}
+
+	hasEncryptedVault := s.service.HasEncryptedVault(userId)
+
+	return &api.HasEncryptedVaultResponse{HasEncryptedVault: hasEncryptedVault}, nil
+}
+
 func (s *EncryptionServer) GetEncryptedVaultKey(_ context.Context, req *api.GetEncryptedVaultKeyRequest) (*api.GetEncryptedVaultKeyResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {

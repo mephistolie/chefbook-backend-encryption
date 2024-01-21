@@ -7,6 +7,7 @@ import (
 )
 
 type Encryption interface {
+	HasEncryptedVault(userId uuid.UUID) bool
 	GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault
 	CreateEncryptedVault(vault entity.EncryptedVault) error
 	CreateVaultDeletionRequest(userId uuid.UUID) (string, error)

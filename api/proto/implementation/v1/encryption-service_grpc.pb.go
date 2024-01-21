@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	EncryptionService_HasEncryptedVault_FullMethodName             = "/v1.EncryptionService/HasEncryptedVault"
 	EncryptionService_GetEncryptedVaultKey_FullMethodName          = "/v1.EncryptionService/GetEncryptedVaultKey"
 	EncryptionService_CreateEncryptedVault_FullMethodName          = "/v1.EncryptionService/CreateEncryptedVault"
 	EncryptionService_RequestEncryptedVaultDeletion_FullMethodName = "/v1.EncryptionService/RequestEncryptedVaultDeletion"
@@ -34,6 +35,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EncryptionServiceClient interface {
+	HasEncryptedVault(ctx context.Context, in *HasEncryptedVaultRequest, opts ...grpc.CallOption) (*HasEncryptedVaultResponse, error)
 	GetEncryptedVaultKey(ctx context.Context, in *GetEncryptedVaultKeyRequest, opts ...grpc.CallOption) (*GetEncryptedVaultKeyResponse, error)
 	CreateEncryptedVault(ctx context.Context, in *CreateEncryptedVaultRequest, opts ...grpc.CallOption) (*CreateEncryptedVaultResponse, error)
 	RequestEncryptedVaultDeletion(ctx context.Context, in *RequestEncryptedVaultDeletionRequest, opts ...grpc.CallOption) (*RequestEncryptedVaultDeletionResponse, error)
@@ -51,6 +53,15 @@ type encryptionServiceClient struct {
 
 func NewEncryptionServiceClient(cc grpc.ClientConnInterface) EncryptionServiceClient {
 	return &encryptionServiceClient{cc}
+}
+
+func (c *encryptionServiceClient) HasEncryptedVault(ctx context.Context, in *HasEncryptedVaultRequest, opts ...grpc.CallOption) (*HasEncryptedVaultResponse, error) {
+	out := new(HasEncryptedVaultResponse)
+	err := c.cc.Invoke(ctx, EncryptionService_HasEncryptedVault_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *encryptionServiceClient) GetEncryptedVaultKey(ctx context.Context, in *GetEncryptedVaultKeyRequest, opts ...grpc.CallOption) (*GetEncryptedVaultKeyResponse, error) {
@@ -138,6 +149,7 @@ func (c *encryptionServiceClient) DeleteRecipeKey(ctx context.Context, in *Delet
 // All implementations must embed UnimplementedEncryptionServiceServer
 // for forward compatibility
 type EncryptionServiceServer interface {
+	HasEncryptedVault(context.Context, *HasEncryptedVaultRequest) (*HasEncryptedVaultResponse, error)
 	GetEncryptedVaultKey(context.Context, *GetEncryptedVaultKeyRequest) (*GetEncryptedVaultKeyResponse, error)
 	CreateEncryptedVault(context.Context, *CreateEncryptedVaultRequest) (*CreateEncryptedVaultResponse, error)
 	RequestEncryptedVaultDeletion(context.Context, *RequestEncryptedVaultDeletionRequest) (*RequestEncryptedVaultDeletionResponse, error)
@@ -154,6 +166,9 @@ type EncryptionServiceServer interface {
 type UnimplementedEncryptionServiceServer struct {
 }
 
+func (UnimplementedEncryptionServiceServer) HasEncryptedVault(context.Context, *HasEncryptedVaultRequest) (*HasEncryptedVaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HasEncryptedVault not implemented")
+}
 func (UnimplementedEncryptionServiceServer) GetEncryptedVaultKey(context.Context, *GetEncryptedVaultKeyRequest) (*GetEncryptedVaultKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEncryptedVaultKey not implemented")
 }
@@ -192,6 +207,24 @@ type UnsafeEncryptionServiceServer interface {
 
 func RegisterEncryptionServiceServer(s grpc.ServiceRegistrar, srv EncryptionServiceServer) {
 	s.RegisterService(&EncryptionService_ServiceDesc, srv)
+}
+
+func _EncryptionService_HasEncryptedVault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HasEncryptedVaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EncryptionServiceServer).HasEncryptedVault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EncryptionService_HasEncryptedVault_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EncryptionServiceServer).HasEncryptedVault(ctx, req.(*HasEncryptedVaultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _EncryptionService_GetEncryptedVaultKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -363,6 +396,10 @@ var EncryptionService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "v1.EncryptionService",
 	HandlerType: (*EncryptionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "HasEncryptedVault",
+			Handler:    _EncryptionService_HasEncryptedVault_Handler,
+		},
 		{
 			MethodName: "GetEncryptedVaultKey",
 			Handler:    _EncryptionService_GetEncryptedVaultKey_Handler,

@@ -13,6 +13,23 @@ import (
 	encryptionFail "github.com/mephistolie/chefbook-backend-encryption/internal/entity/fail"
 )
 
+func (r *Repository) HasEncryptedVault(userId uuid.UUID) bool {
+	var rowsCount int
+
+	query := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM %s
+		WHERE user_id=$1 AND public_key IS NOT NULL
+	`, vaultKeysTable)
+
+	row := r.db.QueryRow(query, userId)
+	if err := row.Scan(&rowsCount); err != nil {
+		log.Debugf("unable to get user %s encrypted vault exist state: %s", userId, err)
+	}
+
+	return rowsCount > 0
+}
+
 func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 	vault := entity.EncryptedVault{UserId: userId}
 

@@ -7,6 +7,10 @@ import (
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
 )
 
+func (s *Service) HasEncryptedVault(userId uuid.UUID) bool {
+	return s.repo.HasEncryptedVault(userId)
+}
+
 func (s *Service) GetEncryptedVaultKey(userId uuid.UUID) *[]byte {
 	return s.repo.GetEncryptedVault(userId).PrivateKey
 }
