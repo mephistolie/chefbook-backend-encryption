@@ -114,7 +114,7 @@ func (s *Service) checkRecipePolicy(recipeId, requesterId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if policy.OwnerId != requesterId.String() || !policy.IsEncrypted || policy.Visibility != recipeModel.VisibilityLink {
+	if policy.OwnerId != requesterId.String() || !policy.IsEncrypted || policy.Visibility == recipeModel.VisibilityPublic {
 		return fail.GrpcAccessDenied
 	}
 	return nil

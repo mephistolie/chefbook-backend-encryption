@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"crypto/x509"
-	"github.com/dgrijalva/jwt-go"
+	"encoding/pem"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	vaultPrivateKeyMinLength = 4000
+	vaultPrivateKeyMinLength = 3000
 	vaultPrivateKeyMaxLength = 5000
 )
 
@@ -56,12 +56,16 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 		return nil, encryptionFail.GrpcPrivateKeyLengthOutOfRange
 	}
 
-	_, err = x509.ParsePKCS1PublicKey(req.PublicKey)
+	publicKey := append([]byte("-----BEGIN PUBLIC KEY-----\n"), req.PublicKey...)
+	publicKey = append(publicKey, []byte("\n-----END PUBLIC KEY-----")...)
+	publicKeyBlock, _ := pem.Decode(publicKey)
+	if publicKeyBlock == nil {
+		return nil, encryptionFail.GrpcInvalidPublicKey
+	}
+
+	_, err = x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
 	if err != nil {
-		_, err = jwt.ParseRSAPublicKeyFromPEM(req.PublicKey)
-		if err != nil {
-			return nil, encryptionFail.GrpcInvalidPublicKey
-		}
+		return nil, encryptionFail.GrpcInvalidPublicKey
 	}
 
 	err = s.service.CreateEncryptedVault(entity.EncryptedVault{

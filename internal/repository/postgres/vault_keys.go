@@ -82,16 +82,16 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode 
 	}
 
 	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
-		return nil, encryptionFail.GrpcInvalidCode
+		return nil, errorWithTransactionRollback(tx, encryptionFail.GrpcInvalidCode)
 	}
 
 	if err = r.deleteVaultWithOwnedRecipeKeys(userId, tx); err != nil {
-		return nil, err
+		return nil, errorWithTransactionRollback(tx, err)
 	}
 
 	msg, err := r.addOutboxVaultDeletedMsg(userId, tx)
 	if err != nil {
-		return nil, err
+		return nil, errorWithTransactionRollback(tx, err)
 	}
 
 	return msg, commitTransaction(tx)
@@ -141,7 +141,7 @@ func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return commitTransaction(tx)
+	return nil
 }
 
 func (r *Repository) addOutboxVaultDeletedMsg(userId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {

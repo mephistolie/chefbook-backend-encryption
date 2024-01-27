@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	recipeKeyMinLength = 150
-	recipeKeyMaxLength = 200
+	recipeKeyMinLength = 200
+	recipeKeyMaxLength = 1000
 )
 
 func (s *EncryptionServer) GetRecipeKeyRequests(_ context.Context, req *api.GetRecipeKeyRequestsRequest) (*api.GetRecipeKeyRequestsResponse, error) {
