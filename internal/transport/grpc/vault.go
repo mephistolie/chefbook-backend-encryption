@@ -1,9 +1,10 @@
 package grpc
 
 import (
+	"bytes"
 	"context"
-	"crypto/x509"
-	"encoding/pem"
+	"github.com/google/tink/go/hybrid"
+	"github.com/google/tink/go/keyset"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
@@ -13,8 +14,8 @@ import (
 )
 
 const (
-	vaultPrivateKeyMinLength = 3000
-	vaultPrivateKeyMaxLength = 5000
+	vaultPrivateKeyMinLength = 300
+	vaultPrivateKeyMaxLength = 500
 )
 
 func (s *EncryptionServer) HasEncryptedVault(_ context.Context, req *api.HasEncryptedVaultRequest) (*api.HasEncryptedVaultResponse, error) {
@@ -56,14 +57,8 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 		return nil, encryptionFail.GrpcPrivateKeyLengthOutOfRange
 	}
 
-	publicKey := append([]byte("-----BEGIN PUBLIC KEY-----\n"), req.PublicKey...)
-	publicKey = append(publicKey, []byte("\n-----END PUBLIC KEY-----")...)
-	publicKeyBlock, _ := pem.Decode(publicKey)
-	if publicKeyBlock == nil {
-		return nil, encryptionFail.GrpcInvalidPublicKey
-	}
-
-	_, err = x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
+	hybrid.DHKEM_X25519_HKDF_SHA256_HKDF_SHA256_AES_256_GCM_Key_Template()
+	_, err = keyset.ReadWithNoSecrets(keyset.NewBinaryReader(bytes.NewBuffer(req.PublicKey)))
 	if err != nil {
 		return nil, encryptionFail.GrpcInvalidPublicKey
 	}
