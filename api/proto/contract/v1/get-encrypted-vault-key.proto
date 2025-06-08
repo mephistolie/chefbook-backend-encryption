@@ -9,4 +9,5 @@ message GetEncryptedVaultKeyRequest {
 
 message GetEncryptedVaultKeyResponse {
   optional bytes encryptedPrivateKey = 1;
+  optional bytes iv = 2;
 }

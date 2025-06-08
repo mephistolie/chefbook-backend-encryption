@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -14,6 +15,7 @@ import (
 
 const (
 	vaultKeysTable      = "vault_keys"
+	recipeIvsTable      = "recipe_ivs"
 	recipeKeysTable     = "recipe_keys"
 	vaultDeletionsTable = "vault_deletions"
 

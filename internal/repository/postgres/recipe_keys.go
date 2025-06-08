@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
@@ -46,21 +47,24 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKey
 	return requests
 }
 
-func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
+func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) (*[]byte, *[]byte) {
 	var key *[]byte
+	var iv *[]byte
 
 	query := fmt.Sprintf(`
-		SELECT key
-		FROM %s
+		SELECT %[1]v.key, %[2]v.iv
+		FROM %[1]v
+		LEFT JOIN
+			%[2]v ON %[1]v.reicpe_id=%[2]v.reicpe_id
 		WHERE recipe_id=$1 AND user_id=$2
-	`, recipeKeysTable)
+	`, recipeKeysTable, recipeIvsTable)
 
 	row := r.db.QueryRow(query, recipeId, userId)
-	if err := row.Scan(&key); err != nil {
+	if err := row.Scan(&key, &iv); err != nil {
 		log.Debugf("unable to get recipe %s key for user %s: %s", recipeId, userId, err)
 	}
 
-	return key
+	return key, iv
 }
 
 func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) error {
@@ -80,13 +84,33 @@ func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) er
 	return nil
 }
 
-func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) error {
-	query := fmt.Sprintf(`
+func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte, iv []byte) error {
+	tx, err := r.startTransaction()
+	if err != nil {
+		return err
+	}
+
+	ivQuery := fmt.Sprintf(`
+		INSERT INTO %s (recipe_id, iv)
+		VALUES ($1, $2)
+	`, recipeIvsTable)
+
+	if _, err := tx.Exec(ivQuery, recipeId, key, iv); err != nil {
+		_ = tx.Rollback()
+		if isUniqueViolationError(err) {
+			return nil
+		}
+		log.Warnf("unable to set recipe %s IV for user %s: %s", recipeId, userId, err)
+		return fail.GrpcUnknown
+	}
+
+	recipeQuery := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, key, status)
 		VALUES ($1, $2, $3, '%s')
 	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	if _, err := r.db.Exec(query, recipeId, userId, key); err != nil {
+	if _, err := tx.Exec(recipeQuery, recipeId, userId, key); err != nil {
+		_ = tx.Rollback()
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -94,7 +118,7 @@ func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) 
 		return fail.GrpcUnknown
 	}
 
-	return nil
+	return commitTransaction(tx)
 }
 
 func (r *Repository) GrantRecipeKeyAccessForUser(recipeId, userId uuid.UUID, key []byte) error {

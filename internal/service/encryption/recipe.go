@@ -2,6 +2,8 @@ package encryption
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
@@ -9,7 +11,6 @@ import (
 	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	recipeModel "github.com/mephistolie/chefbook-backend-recipe/api/model"
 	recipeApi "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
-	"time"
 )
 
 func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error) {
@@ -44,12 +45,12 @@ func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]
 	return requests, nil
 }
 
-func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
+func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) (*[]byte, *[]byte) {
 	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil || !policy.IsEncrypted || policy.OwnerId != userId.String() && policy.Visibility == recipeModel.VisibilityPrivate {
-		return nil
+		return nil, nil
 	}
 
 	return s.repo.GetRecipeKey(recipeId, userId)
@@ -76,7 +77,7 @@ func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
 	return s.repo.CreateRecipeKeyAccessRequest(recipeId, userId)
 }
 
-func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error {
+func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, iv []byte, requesterId uuid.UUID) error {
 	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
 		return err
 	}
@@ -86,9 +87,9 @@ func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requester
 	}
 
 	if userId == requesterId {
-		return s.repo.SetRecipeAuthorKey(recipeId, userId, key)
+		return s.repo.SetRecipeAuthorKey(recipeId, userId, key, iv)
 	} else {
-		if ownerKey := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
+		if ownerKey, _ := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
 			return encryptionFail.GrpcNoOwnerRecipeKey
 		}
 
