@@ -20,15 +20,15 @@ type Service struct {
 
 type Encryption interface {
 	HasEncryptedVault(userId uuid.UUID) bool
-	GetEncryptedVaultKey(userId uuid.UUID) entity.EncryptedVault
+	GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault
 	CreateEncryptedVault(key entity.EncryptedVault) error
 	RequestEncryptedVaultDeletion(userId uuid.UUID) error
 	DeleteEncryptedVault(userId uuid.UUID, deleteCode string) error
 
 	GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error)
-	GetRecipeKey(recipeId, userId uuid.UUID) (*[]byte, *[]byte)
+	GetRecipeKey(recipeId, userId uuid.UUID) *[]byte
 	RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error
-	SetRecipeKey(recipeId, userId uuid.UUID, key []byte, iv []byte, requesterId uuid.UUID) error
+	SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error
 	DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) error
 }
 

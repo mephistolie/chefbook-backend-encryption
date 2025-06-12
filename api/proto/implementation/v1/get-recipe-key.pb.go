@@ -76,7 +76,6 @@ func (x *GetRecipeKeyRequest) GetUserId() string {
 type GetRecipeKeyResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	EncryptedKey  []byte                 `protobuf:"bytes,1,opt,name=encryptedKey,proto3,oneof" json:"encryptedKey,omitempty"`
-	Iv            []byte                 `protobuf:"bytes,2,opt,name=iv,proto3,oneof" json:"iv,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -118,13 +117,6 @@ func (x *GetRecipeKeyResponse) GetEncryptedKey() []byte {
 	return nil
 }
 
-func (x *GetRecipeKeyResponse) GetIv() []byte {
-	if x != nil {
-		return x.Iv
-	}
-	return nil
-}
-
 var File_v1_get_recipe_key_proto protoreflect.FileDescriptor
 
 const file_v1_get_recipe_key_proto_rawDesc = "" +
@@ -132,12 +124,10 @@ const file_v1_get_recipe_key_proto_rawDesc = "" +
 	"\x17v1/get-recipe-key.proto\x12\x02v1\"I\n" +
 	"\x13GetRecipeKeyRequest\x12\x1a\n" +
 	"\brecipeId\x18\x01 \x01(\tR\brecipeId\x12\x16\n" +
-	"\x06userId\x18\x02 \x01(\tR\x06userId\"l\n" +
+	"\x06userId\x18\x02 \x01(\tR\x06userId\"P\n" +
 	"\x14GetRecipeKeyResponse\x12'\n" +
-	"\fencryptedKey\x18\x01 \x01(\fH\x00R\fencryptedKey\x88\x01\x01\x12\x13\n" +
-	"\x02iv\x18\x02 \x01(\fH\x01R\x02iv\x88\x01\x01B\x0f\n" +
-	"\r_encryptedKeyB\x05\n" +
-	"\x03_ivBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
+	"\fencryptedKey\x18\x01 \x01(\fH\x00R\fencryptedKey\x88\x01\x01B\x0f\n" +
+	"\r_encryptedKeyBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
 
 var (
 	file_v1_get_recipe_key_proto_rawDescOnce sync.Once

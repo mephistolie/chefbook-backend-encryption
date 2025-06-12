@@ -45,12 +45,12 @@ func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]
 	return requests, nil
 }
 
-func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) (*[]byte, *[]byte) {
+func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil || !policy.IsEncrypted || policy.OwnerId != userId.String() && policy.Visibility == recipeModel.VisibilityPrivate {
-		return nil, nil
+		return nil
 	}
 
 	return s.repo.GetRecipeKey(recipeId, userId)
@@ -77,7 +77,7 @@ func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
 	return s.repo.CreateRecipeKeyAccessRequest(recipeId, userId)
 }
 
-func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, iv []byte, requesterId uuid.UUID) error {
+func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error {
 	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
 		return err
 	}
@@ -87,9 +87,9 @@ func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, iv []byte
 	}
 
 	if userId == requesterId {
-		return s.repo.SetRecipeAuthorKey(recipeId, userId, key, iv)
+		return s.repo.SetRecipeAuthorKey(recipeId, userId, key)
 	} else {
-		if ownerKey, _ := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
+		if ownerKey := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
 			return encryptionFail.GrpcNoOwnerRecipeKey
 		}
 

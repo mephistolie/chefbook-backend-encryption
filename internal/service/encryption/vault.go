@@ -12,7 +12,7 @@ func (s *Service) HasEncryptedVault(userId uuid.UUID) bool {
 	return s.repo.HasEncryptedVault(userId)
 }
 
-func (s *Service) GetEncryptedVaultKey(userId uuid.UUID) entity.EncryptedVault {
+func (s *Service) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 	return s.repo.GetEncryptedVault(userId)
 }
 

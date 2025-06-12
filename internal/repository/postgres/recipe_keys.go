@@ -47,24 +47,21 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKey
 	return requests
 }
 
-func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) (*[]byte, *[]byte) {
+func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 	var key *[]byte
-	var iv *[]byte
 
 	query := fmt.Sprintf(`
-		SELECT %[1]v.key, %[2]v.iv
-		FROM %[1]v
-		LEFT JOIN
-			%[2]v ON %[1]v.reicpe_id=%[2]v.reicpe_id
+		SELECT key
+		FROM %s
 		WHERE recipe_id=$1 AND user_id=$2
-	`, recipeKeysTable, recipeIvsTable)
+	`, recipeKeysTable)
 
 	row := r.db.QueryRow(query, recipeId, userId)
-	if err := row.Scan(&key, &iv); err != nil {
+	if err := row.Scan(&key); err != nil {
 		log.Debugf("unable to get recipe %s key for user %s: %s", recipeId, userId, err)
 	}
 
-	return key, iv
+	return key
 }
 
 func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) error {
@@ -84,33 +81,13 @@ func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) er
 	return nil
 }
 
-func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte, iv []byte) error {
-	tx, err := r.startTransaction()
-	if err != nil {
-		return err
-	}
-
-	ivQuery := fmt.Sprintf(`
-		INSERT INTO %s (recipe_id, iv)
-		VALUES ($1, $2)
-	`, recipeIvsTable)
-
-	if _, err := tx.Exec(ivQuery, recipeId, key, iv); err != nil {
-		_ = tx.Rollback()
-		if isUniqueViolationError(err) {
-			return nil
-		}
-		log.Warnf("unable to set recipe %s IV for user %s: %s", recipeId, userId, err)
-		return fail.GrpcUnknown
-	}
-
-	recipeQuery := fmt.Sprintf(`
+func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) error {
+	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, key, status)
 		VALUES ($1, $2, $3, '%s')
 	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	if _, err := tx.Exec(recipeQuery, recipeId, userId, key); err != nil {
-		_ = tx.Rollback()
+	if _, err := r.db.Exec(query, recipeId, userId, key); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -118,7 +95,7 @@ func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte, 
 		return fail.GrpcUnknown
 	}
 
-	return commitTransaction(tx)
+	return nil
 }
 
 func (r *Repository) GrantRecipeKeyAccessForUser(recipeId, userId uuid.UUID, key []byte) error {

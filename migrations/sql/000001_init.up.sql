@@ -3,23 +3,16 @@ CREATE TABLE vault_keys
     user_id     uuid PRIMARY KEY NOT NULL UNIQUE,
     public_key  bytea            NOT NULL,
     private_key bytea            NOT NULL,
-    iv          bytea            NOT NULL,
+    salt        bytea            NOT NULL
 );
 
 CREATE TYPE recipe_key_request_status as ENUM ('owned', 'approved', 'pending', 'declined');
 
-CREATE TABLE recipe_ivs
-(
-    recipe_id uuid PRIMARY KEY NOT NULL UNIQUE,
-    iv        bytea            NOT NULL,
-);
-
 CREATE TABLE recipe_keys
 (
-    recipe_id uuid REFERENCES recipe_ivs (user_id) ON DELETE CASCADE NOT NULL,
+    recipe_id uuid                                                   NOT NULL,
     user_id   uuid REFERENCES vault_keys (user_id) ON DELETE CASCADE NOT NULL,
     key       bytea                                                           DEFAULT NULL,
-    iv        bytea                                                  NOT NULL,
     status    recipe_key_request_status                              NOT NULL DEFAULT 'pending',
     UNIQUE (recipe_id, user_id)
 );

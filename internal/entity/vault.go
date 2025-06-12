@@ -6,5 +6,5 @@ type EncryptedVault struct {
 	UserId     uuid.UUID
 	PublicKey  *[]byte
 	PrivateKey *[]byte
-	IV         *[]byte
+	Salt       *[]byte
 }

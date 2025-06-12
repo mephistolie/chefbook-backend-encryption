@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
@@ -34,19 +35,19 @@ func (s *EncryptionServer) GetEncryptedVaultKey(_ context.Context, req *api.GetE
 		return nil, fail.GrpcInvalidBody
 	}
 
-	key := s.service.GetEncryptedVaultKey(userId)
+	vault := s.service.GetEncryptedVault(userId)
 	var keyBytes []byte
-	var ivBytes []byte
-	if key.PrivateKey != nil {
-		keyBytes = *key.PrivateKey
+	var saltBytes []byte
+	if vault.PrivateKey != nil {
+		keyBytes = *vault.PrivateKey
 	}
-	if key.IV != nil {
-		ivBytes = *key.IV
+	if vault.Salt != nil {
+		saltBytes = *vault.Salt
 	}
 
 	return &api.GetEncryptedVaultKeyResponse{
 		EncryptedPrivateKey: keyBytes,
-		Iv:                  ivBytes,
+		Salt:                saltBytes,
 	}, nil
 }
 
@@ -79,7 +80,7 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 		UserId:     userId,
 		PublicKey:  &req.PublicKey,
 		PrivateKey: &req.EncryptedPrivateKey,
-		IV:         &req.Iv,
+		Salt:       &req.Salt,
 	})
 	if err != nil {
 		return nil, err

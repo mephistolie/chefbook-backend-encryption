@@ -8,8 +8,7 @@ message SetRecipeKeyRequest {
   optional string userId = 2;
   string requesterId = 3;
   bytes encryptedKey = 4;
-  optional bytes iv = 5;
-  string subscriptionPlan = 6;
+  string subscriptionPlan = 5;
 }
 
 message SetRecipeKeyResponse {

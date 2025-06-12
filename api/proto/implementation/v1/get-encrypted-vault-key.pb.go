@@ -68,7 +68,7 @@ func (x *GetEncryptedVaultKeyRequest) GetUserId() string {
 type GetEncryptedVaultKeyResponse struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	EncryptedPrivateKey []byte                 `protobuf:"bytes,1,opt,name=encryptedPrivateKey,proto3,oneof" json:"encryptedPrivateKey,omitempty"`
-	Iv                  []byte                 `protobuf:"bytes,2,opt,name=iv,proto3,oneof" json:"iv,omitempty"`
+	Salt                []byte                 `protobuf:"bytes,2,opt,name=salt,proto3,oneof" json:"salt,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -110,9 +110,9 @@ func (x *GetEncryptedVaultKeyResponse) GetEncryptedPrivateKey() []byte {
 	return nil
 }
 
-func (x *GetEncryptedVaultKeyResponse) GetIv() []byte {
+func (x *GetEncryptedVaultKeyResponse) GetSalt() []byte {
 	if x != nil {
-		return x.Iv
+		return x.Salt
 	}
 	return nil
 }
@@ -123,12 +123,12 @@ const file_v1_get_encrypted_vault_key_proto_rawDesc = "" +
 	"\n" +
 	" v1/get-encrypted-vault-key.proto\x12\x02v1\"5\n" +
 	"\x1bGetEncryptedVaultKeyRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\"\x89\x01\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\"\x8f\x01\n" +
 	"\x1cGetEncryptedVaultKeyResponse\x125\n" +
-	"\x13encryptedPrivateKey\x18\x01 \x01(\fH\x00R\x13encryptedPrivateKey\x88\x01\x01\x12\x13\n" +
-	"\x02iv\x18\x02 \x01(\fH\x01R\x02iv\x88\x01\x01B\x16\n" +
-	"\x14_encryptedPrivateKeyB\x05\n" +
-	"\x03_ivBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
+	"\x13encryptedPrivateKey\x18\x01 \x01(\fH\x00R\x13encryptedPrivateKey\x88\x01\x01\x12\x17\n" +
+	"\x04salt\x18\x02 \x01(\fH\x01R\x04salt\x88\x01\x01B\x16\n" +
+	"\x14_encryptedPrivateKeyB\a\n" +
+	"\x05_saltBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
 
 var (
 	file_v1_get_encrypted_vault_key_proto_rawDescOnce sync.Once

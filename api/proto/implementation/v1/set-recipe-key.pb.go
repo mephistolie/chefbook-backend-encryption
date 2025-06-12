@@ -27,8 +27,7 @@ type SetRecipeKeyRequest struct {
 	UserId           *string                `protobuf:"bytes,2,opt,name=userId,proto3,oneof" json:"userId,omitempty"`
 	RequesterId      string                 `protobuf:"bytes,3,opt,name=requesterId,proto3" json:"requesterId,omitempty"`
 	EncryptedKey     []byte                 `protobuf:"bytes,4,opt,name=encryptedKey,proto3" json:"encryptedKey,omitempty"`
-	Iv               []byte                 `protobuf:"bytes,5,opt,name=iv,proto3,oneof" json:"iv,omitempty"`
-	SubscriptionPlan string                 `protobuf:"bytes,6,opt,name=subscriptionPlan,proto3" json:"subscriptionPlan,omitempty"`
+	SubscriptionPlan string                 `protobuf:"bytes,5,opt,name=subscriptionPlan,proto3" json:"subscriptionPlan,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -91,13 +90,6 @@ func (x *SetRecipeKeyRequest) GetEncryptedKey() []byte {
 	return nil
 }
 
-func (x *SetRecipeKeyRequest) GetIv() []byte {
-	if x != nil {
-		return x.Iv
-	}
-	return nil
-}
-
 func (x *SetRecipeKeyRequest) GetSubscriptionPlan() string {
 	if x != nil {
 		return x.SubscriptionPlan
@@ -153,16 +145,14 @@ var File_v1_set_recipe_key_proto protoreflect.FileDescriptor
 
 const file_v1_set_recipe_key_proto_rawDesc = "" +
 	"\n" +
-	"\x17v1/set-recipe-key.proto\x12\x02v1\"\xe7\x01\n" +
+	"\x17v1/set-recipe-key.proto\x12\x02v1\"\xcb\x01\n" +
 	"\x13SetRecipeKeyRequest\x12\x1a\n" +
 	"\brecipeId\x18\x01 \x01(\tR\brecipeId\x12\x1b\n" +
 	"\x06userId\x18\x02 \x01(\tH\x00R\x06userId\x88\x01\x01\x12 \n" +
 	"\vrequesterId\x18\x03 \x01(\tR\vrequesterId\x12\"\n" +
-	"\fencryptedKey\x18\x04 \x01(\fR\fencryptedKey\x12\x13\n" +
-	"\x02iv\x18\x05 \x01(\fH\x01R\x02iv\x88\x01\x01\x12*\n" +
-	"\x10subscriptionPlan\x18\x06 \x01(\tR\x10subscriptionPlanB\t\n" +
-	"\a_userIdB\x05\n" +
-	"\x03_iv\"0\n" +
+	"\fencryptedKey\x18\x04 \x01(\fR\fencryptedKey\x12*\n" +
+	"\x10subscriptionPlan\x18\x05 \x01(\tR\x10subscriptionPlanB\t\n" +
+	"\a_userId\"0\n" +
 	"\x14SetRecipeKeyResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessageBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
 

@@ -15,7 +15,6 @@ import (
 
 const (
 	vaultKeysTable      = "vault_keys"
-	recipeIvsTable      = "recipe_ivs"
 	recipeKeysTable     = "recipe_keys"
 	vaultDeletionsTable = "vault_deletions"
 

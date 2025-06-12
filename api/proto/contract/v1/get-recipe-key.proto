@@ -10,5 +10,4 @@ message GetRecipeKeyRequest {
 
 message GetRecipeKeyResponse {
   optional bytes encryptedKey = 1;
-  optional bytes iv = 2;
 }

@@ -7,7 +7,7 @@ message CreateEncryptedVaultRequest {
   string userId = 1;
   bytes publicKey = 2;
   bytes encryptedPrivateKey = 3;
-  bytes iv = 4;
+  bytes salt = 4;
 }
 
 message CreateEncryptedVaultResponse {

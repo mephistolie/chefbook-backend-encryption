@@ -26,7 +26,7 @@ type CreateEncryptedVaultRequest struct {
 	UserId              string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	PublicKey           []byte                 `protobuf:"bytes,2,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
 	EncryptedPrivateKey []byte                 `protobuf:"bytes,3,opt,name=encryptedPrivateKey,proto3" json:"encryptedPrivateKey,omitempty"`
-	Iv                  []byte                 `protobuf:"bytes,4,opt,name=iv,proto3" json:"iv,omitempty"`
+	Salt                []byte                 `protobuf:"bytes,4,opt,name=salt,proto3" json:"salt,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -82,9 +82,9 @@ func (x *CreateEncryptedVaultRequest) GetEncryptedPrivateKey() []byte {
 	return nil
 }
 
-func (x *CreateEncryptedVaultRequest) GetIv() []byte {
+func (x *CreateEncryptedVaultRequest) GetSalt() []byte {
 	if x != nil {
-		return x.Iv
+		return x.Salt
 	}
 	return nil
 }
@@ -137,12 +137,12 @@ var File_v1_create_encrypted_vault_proto protoreflect.FileDescriptor
 
 const file_v1_create_encrypted_vault_proto_rawDesc = "" +
 	"\n" +
-	"\x1fv1/create-encrypted-vault.proto\x12\x02v1\"\x95\x01\n" +
+	"\x1fv1/create-encrypted-vault.proto\x12\x02v1\"\x99\x01\n" +
 	"\x1bCreateEncryptedVaultRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x1c\n" +
 	"\tpublicKey\x18\x02 \x01(\fR\tpublicKey\x120\n" +
-	"\x13encryptedPrivateKey\x18\x03 \x01(\fR\x13encryptedPrivateKey\x12\x0e\n" +
-	"\x02iv\x18\x04 \x01(\fR\x02iv\"8\n" +
+	"\x13encryptedPrivateKey\x18\x03 \x01(\fR\x13encryptedPrivateKey\x12\x12\n" +
+	"\x04salt\x18\x04 \x01(\fR\x04salt\"8\n" +
 	"\x1cCreateEncryptedVaultResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessageBAZ?github.com/mephistolie/chefbook-backend-encryption/api/proto/v1b\x06proto3"
 

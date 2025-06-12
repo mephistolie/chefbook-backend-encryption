@@ -35,13 +35,13 @@ func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 	vault := entity.EncryptedVault{UserId: userId}
 
 	query := fmt.Sprintf(`
-		SELECT public_key, private_key, iv
+		SELECT public_key, private_key, salt
 		FROM %s
 		WHERE user_id=$1
 	`, vaultKeysTable)
 
 	row := r.db.QueryRow(query, userId)
-	if err := row.Scan(&vault.PublicKey, &vault.PrivateKey, &vault.IV); err != nil {
+	if err := row.Scan(&vault.PublicKey, &vault.PrivateKey, &vault.Salt); err != nil {
 		log.Debugf("unable to get user %s encrypted vault: %s", userId, err)
 	}
 
@@ -50,11 +50,11 @@ func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 
 func (r *Repository) CreateEncryptedVault(vault entity.EncryptedVault) error {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (user_id, public_key, private_key, iv)
+		INSERT INTO %s (user_id, public_key, private_key, salt)
 		VALUES ($1, $2, $3, $4)
 	`, vaultKeysTable)
 
-	if _, err := r.db.Exec(query, vault.UserId, *vault.PublicKey, *vault.PrivateKey, *vault.IV); err != nil {
+	if _, err := r.db.Exec(query, vault.UserId, *vault.PublicKey, *vault.PrivateKey, *vault.Salt); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}

@@ -58,20 +58,13 @@ func (s *EncryptionServer) GetRecipeKey(_ context.Context, req *api.GetRecipeKey
 		return nil, fail.GrpcInvalidBody
 	}
 
-	key, iv := s.service.GetRecipeKey(recipeId, userId)
-	var keyBytes []byte
-	var ivBytes []byte
+	key := s.service.GetRecipeKey(recipeId, userId)
+	var response []byte
 	if key != nil {
-		keyBytes = *key
-	}
-	if iv != nil {
-		ivBytes = *iv
+		response = *key
 	}
 
-	return &api.GetRecipeKeyResponse{
-		EncryptedKey: keyBytes,
-		Iv:           ivBytes,
-	}, nil
+	return &api.GetRecipeKeyResponse{EncryptedKey: response}, nil
 }
 
 func (s *EncryptionServer) RequestRecipeKeyAccess(_ context.Context, req *api.RequestRecipeKeyAccessRequest) (*api.RequestRecipeKeyAccessResponse, error) {
@@ -117,7 +110,7 @@ func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKey
 		return nil, fail.GrpcPremiumRequired
 	}
 
-	if err = s.service.SetRecipeKey(recipeId, userId, req.EncryptedKey, req.Iv, requesterId); err != nil {
+	if err = s.service.SetRecipeKey(recipeId, userId, req.EncryptedKey, requesterId); err != nil {
 		return nil, err
 	}
 
