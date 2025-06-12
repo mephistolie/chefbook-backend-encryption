@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"

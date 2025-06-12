@@ -2,7 +2,8 @@ CREATE TABLE vault_keys
 (
     user_id     uuid PRIMARY KEY NOT NULL UNIQUE,
     public_key  bytea            NOT NULL,
-    private_key bytea            NOT NULL
+    private_key bytea            NOT NULL,
+    salt        bytea            NOT NULL
 );
 
 CREATE TYPE recipe_key_request_status as ENUM ('owned', 'approved', 'pending', 'declined');

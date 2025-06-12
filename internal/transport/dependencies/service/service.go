@@ -20,7 +20,7 @@ type Service struct {
 
 type Encryption interface {
 	HasEncryptedVault(userId uuid.UUID) bool
-	GetEncryptedVaultKey(userId uuid.UUID) *[]byte
+	GetEncryptedVaultKey(userId uuid.UUID) entity.EncryptedVault
 	CreateEncryptedVault(key entity.EncryptedVault) error
 	RequestEncryptedVaultDeletion(userId uuid.UUID) error
 	DeleteEncryptedVault(userId uuid.UUID, deleteCode string) error

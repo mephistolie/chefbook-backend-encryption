@@ -2,6 +2,7 @@ package encryption
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
@@ -11,8 +12,8 @@ func (s *Service) HasEncryptedVault(userId uuid.UUID) bool {
 	return s.repo.HasEncryptedVault(userId)
 }
 
-func (s *Service) GetEncryptedVaultKey(userId uuid.UUID) *[]byte {
-	return s.repo.GetEncryptedVault(userId).PrivateKey
+func (s *Service) GetEncryptedVaultKey(userId uuid.UUID) entity.EncryptedVault {
+	return s.repo.GetEncryptedVault(userId)
 }
 
 func (s *Service) CreateEncryptedVault(key entity.EncryptedVault) error {
