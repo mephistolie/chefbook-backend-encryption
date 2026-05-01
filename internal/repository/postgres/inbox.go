@@ -70,7 +70,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		DELETE FROM %[1]v
 		WHERE ctid IN
 		(
-			SELECT ctid IN
+			SELECT ctid
 			FROM %[1]v
 			ORDER BY timestamp DESC
 			OFFSET 1000
