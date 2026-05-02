@@ -10,7 +10,7 @@ require (
 	github.com/mephistolie/chefbook-backend-common/log v0.6.0
 	github.com/mephistolie/chefbook-backend-common/mail v0.6.0
 	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.6.0
-	github.com/mephistolie/chefbook-backend-common/mq v0.12.1
+	github.com/mephistolie/chefbook-backend-common/mq v0.13.0
 	github.com/mephistolie/chefbook-backend-common/random v0.7.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
@@ -19,7 +19,7 @@ require (
 	github.com/mephistolie/chefbook-backend-profile/api v1.3.1
 	github.com/mephistolie/chefbook-backend-recipe/api v1.7.8
 	github.com/peterbourgon/ff/v3 v3.4.0
-	github.com/wagslane/go-rabbitmq v0.12.3
+	github.com/wagslane/go-rabbitmq v0.15.0
 	google.golang.org/grpc v1.80.0
 )
 
