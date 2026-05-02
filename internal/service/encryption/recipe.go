@@ -13,12 +13,12 @@ import (
 	recipeApi "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 )
 
-func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error) {
-	if err := s.checkRecipePolicy(recipeId, userId); err != nil {
+func (s *Service) GetRecipeKeyRequests(ctx context.Context, recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error) {
+	if err := s.checkRecipePolicy(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
-	requests := s.repo.GetRecipeKeyRequests(recipeId)
+	requests := s.repo.GetRecipeKeyRequests(ctx, recipeId)
 
 	var profileIds []string
 	for _, request := range requests {
@@ -26,8 +26,8 @@ func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]
 	}
 
 	if len(requests) > 0 {
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
-		res, err := s.grpc.Profile.GetProfilesMinInfo(ctx, &profileApi.GetProfilesMinInfoRequest{
+		callCtx, cancelCtx := context.WithTimeout(ctx, 3*time.Second)
+		res, err := s.grpc.Profile.GetProfilesMinInfo(callCtx, &profileApi.GetProfilesMinInfoRequest{
 			ProfileIds: profileIds,
 		})
 		cancelCtx()
@@ -45,23 +45,23 @@ func (s *Service) GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]
 	return requests, nil
 }
 
-func (s *Service) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
-	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
+func (s *Service) GetRecipeKey(ctx context.Context, recipeId, userId uuid.UUID) *[]byte {
+	policy, err := s.grpc.Recipe.GetRecipePolicy(ctx, &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil || !policy.IsEncrypted || policy.OwnerId != userId.String() && policy.Visibility == recipeModel.VisibilityPrivate {
 		return nil
 	}
 
-	return s.repo.GetRecipeKey(recipeId, userId)
+	return s.repo.GetRecipeKey(ctx, recipeId, userId)
 }
 
-func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
-	if userVaultKey := s.repo.GetEncryptedVault(userId); userVaultKey.PrivateKey == nil {
+func (s *Service) RequestRecipeKeyAccess(ctx context.Context, recipeId, userId uuid.UUID) error {
+	if userVaultKey := s.repo.GetEncryptedVault(ctx, userId); userVaultKey.PrivateKey == nil {
 		return encryptionFail.GrpcNoVault
 	}
 
-	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
+	policy, err := s.grpc.Recipe.GetRecipePolicy(ctx, &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil {
@@ -74,42 +74,42 @@ func (s *Service) RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error {
 		return fail.GrpcAccessDenied
 	}
 
-	return s.repo.CreateRecipeKeyAccessRequest(recipeId, userId)
+	return s.repo.CreateRecipeKeyAccessRequest(ctx, recipeId, userId)
 }
 
-func (s *Service) SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error {
-	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
+func (s *Service) SetRecipeKey(ctx context.Context, recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error {
+	if err := s.checkRecipePolicy(ctx, recipeId, requesterId); err != nil {
 		return err
 	}
 
-	if userVaultKey := s.repo.GetEncryptedVault(userId); userVaultKey.PrivateKey == nil {
+	if userVaultKey := s.repo.GetEncryptedVault(ctx, userId); userVaultKey.PrivateKey == nil {
 		return encryptionFail.GrpcNoVault
 	}
 
 	if userId == requesterId {
-		return s.repo.SetRecipeAuthorKey(recipeId, userId, key)
+		return s.repo.SetRecipeAuthorKey(ctx, recipeId, userId, key)
 	} else {
-		if ownerKey := s.repo.GetRecipeKey(recipeId, requesterId); ownerKey == nil {
+		if ownerKey := s.repo.GetRecipeKey(ctx, recipeId, requesterId); ownerKey == nil {
 			return encryptionFail.GrpcNoOwnerRecipeKey
 		}
 
-		return s.repo.GrantRecipeKeyAccessForUser(recipeId, userId, key)
+		return s.repo.GrantRecipeKeyAccessForUser(ctx, recipeId, userId, key)
 	}
 }
 
-func (s *Service) DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) error {
-	if err := s.checkRecipePolicy(recipeId, requesterId); err != nil {
+func (s *Service) DeleteRecipeUserKey(ctx context.Context, recipeId, userId, requesterId uuid.UUID) error {
+	if err := s.checkRecipePolicy(ctx, recipeId, requesterId); err != nil {
 		return err
 	}
 	if userId == requesterId {
 		return encryptionFail.GrpcOwnedRecipeKeyDeletion
 	}
 
-	return s.repo.DeclineRecipeKeyAccessForUser(recipeId, userId)
+	return s.repo.DeclineRecipeKeyAccessForUser(ctx, recipeId, userId)
 }
 
-func (s *Service) checkRecipePolicy(recipeId, requesterId uuid.UUID) error {
-	policy, err := s.grpc.Recipe.GetRecipePolicy(context.Background(), &recipeApi.GetRecipePolicyRequest{
+func (s *Service) checkRecipePolicy(ctx context.Context, recipeId, requesterId uuid.UUID) error {
+	policy, err := s.grpc.Recipe.GetRecipePolicy(ctx, &recipeApi.GetRecipePolicyRequest{
 		RecipeId: recipeId.String(),
 	})
 	if err != nil {

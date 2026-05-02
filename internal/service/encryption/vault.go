@@ -8,20 +8,20 @@ import (
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
 )
 
-func (s *Service) HasEncryptedVault(userId uuid.UUID) bool {
-	return s.repo.HasEncryptedVault(userId)
+func (s *Service) HasEncryptedVault(ctx context.Context, userId uuid.UUID) bool {
+	return s.repo.HasEncryptedVault(ctx, userId)
 }
 
-func (s *Service) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
-	return s.repo.GetEncryptedVault(userId)
+func (s *Service) GetEncryptedVault(ctx context.Context, userId uuid.UUID) entity.EncryptedVault {
+	return s.repo.GetEncryptedVault(ctx, userId)
 }
 
-func (s *Service) CreateEncryptedVault(key entity.EncryptedVault) error {
-	return s.repo.CreateEncryptedVault(key)
+func (s *Service) CreateEncryptedVault(ctx context.Context, key entity.EncryptedVault) error {
+	return s.repo.CreateEncryptedVault(ctx, key)
 }
 
-func (s *Service) RequestEncryptedVaultDeletion(userId uuid.UUID) error {
-	deleteCode, err := s.repo.CreateVaultDeletionRequest(userId)
+func (s *Service) RequestEncryptedVaultDeletion(ctx context.Context, userId uuid.UUID) error {
+	deleteCode, err := s.repo.CreateVaultDeletionRequest(ctx, userId)
 	if err == nil {
 		go func() {
 			info, err := s.grpc.Auth.GetAuthInfo(context.Background(), &api.GetAuthInfoRequest{Id: userId.String()})
@@ -33,8 +33,8 @@ func (s *Service) RequestEncryptedVaultDeletion(userId uuid.UUID) error {
 	return err
 }
 
-func (s *Service) DeleteEncryptedVault(userId uuid.UUID, deleteCode string) error {
-	msg, err := s.repo.ConfirmEncryptedVaultDeletion(userId, deleteCode)
+func (s *Service) DeleteEncryptedVault(ctx context.Context, userId uuid.UUID, deleteCode string) error {
+	msg, err := s.repo.ConfirmEncryptedVaultDeletion(ctx, userId, deleteCode)
 	if err == nil && msg != nil {
 		go s.mqPublisher.PublishMessage(msg)
 	}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 	encryptionFail "github.com/mephistolie/chefbook-backend-encryption/internal/entity/fail"
 )
 
-func (r *Repository) HasEncryptedVault(userId uuid.UUID) bool {
+func (r *Repository) HasEncryptedVault(ctx context.Context, userId uuid.UUID) bool {
 	var rowsCount int
 
 	query := fmt.Sprintf(`
@@ -23,7 +24,7 @@ func (r *Repository) HasEncryptedVault(userId uuid.UUID) bool {
 		WHERE user_id=$1 AND public_key IS NOT NULL
 	`, vaultKeysTable)
 
-	row := r.db.QueryRow(query, userId)
+	row := r.db.QueryRowContext(ctx, query, userId)
 	if err := row.Scan(&rowsCount); err != nil {
 		log.Debugf("unable to get user %s encrypted vault exist state: %s", userId, err)
 	}
@@ -31,7 +32,7 @@ func (r *Repository) HasEncryptedVault(userId uuid.UUID) bool {
 	return rowsCount > 0
 }
 
-func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
+func (r *Repository) GetEncryptedVault(ctx context.Context, userId uuid.UUID) entity.EncryptedVault {
 	vault := entity.EncryptedVault{UserId: userId}
 
 	query := fmt.Sprintf(`
@@ -40,7 +41,7 @@ func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 		WHERE user_id=$1
 	`, vaultKeysTable)
 
-	row := r.db.QueryRow(query, userId)
+	row := r.db.QueryRowContext(ctx, query, userId)
 	if err := row.Scan(&vault.PublicKey, &vault.PrivateKey, &vault.Salt); err != nil {
 		log.Debugf("unable to get user %s encrypted vault: %s", userId, err)
 	}
@@ -48,13 +49,13 @@ func (r *Repository) GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault {
 	return vault
 }
 
-func (r *Repository) CreateEncryptedVault(vault entity.EncryptedVault) error {
+func (r *Repository) CreateEncryptedVault(ctx context.Context, vault entity.EncryptedVault) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (user_id, public_key, private_key, salt)
 		VALUES ($1, $2, $3, $4)
 	`, vaultKeysTable)
 
-	if _, err := r.db.Exec(query, vault.UserId, *vault.PublicKey, *vault.PrivateKey, *vault.Salt); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, vault.UserId, *vault.PublicKey, *vault.PrivateKey, *vault.Salt); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -65,8 +66,8 @@ func (r *Repository) CreateEncryptedVault(vault entity.EncryptedVault) error {
 	return nil
 }
 
-func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode string) (*model.MessageData, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) ConfirmEncryptedVaultDeletion(ctx context.Context, userId uuid.UUID, deleteCode string) (*model.MessageData, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode 
 		WHERE user_id=$1 AND delete_code=$2
 	`, vaultDeletionsTable)
 
-	result, err := tx.Exec(consumeCodeQuery, userId, deleteCode)
+	result, err := tx.ExecContext(ctx, consumeCodeQuery, userId, deleteCode)
 	if err != nil {
 		log.Warnf("unable to consume profile %s vault delete code: %s", userId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
@@ -86,7 +87,7 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode 
 		return nil, errorWithTransactionRollback(tx, encryptionFail.GrpcInvalidCode)
 	}
 
-	if err = r.deleteVaultWithOwnedRecipeKeys(userId, tx); err != nil {
+	if err = r.deleteVaultWithOwnedRecipeKeys(ctx, userId, tx); err != nil {
 		return nil, errorWithTransactionRollback(tx, err)
 	}
 
@@ -98,18 +99,19 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(userId uuid.UUID, deleteCode 
 	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx) error {
+func (r *Repository) deleteVaultWithOwnedRecipeKeys(ctx context.Context, userId uuid.UUID, tx *sql.Tx) error {
 	getOwnedRecipesQuery := fmt.Sprintf(`
 		SELECT recipe_id
 		FROM %s
 		WHERE user_id=$1 AND status='%s'
 	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	rows, err := tx.Query(getOwnedRecipesQuery, userId)
+	rows, err := tx.QueryContext(ctx, getOwnedRecipesQuery, userId)
 	if err != nil {
 		log.Errorf("unable to get owned recipes for user %s: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
+	defer rows.Close()
 
 	var ownedRecipeIds []uuid.UUID
 	for rows.Next() {
@@ -120,13 +122,17 @@ func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx
 		}
 		ownedRecipeIds = append(ownedRecipeIds, recipeId)
 	}
+	if err = rows.Err(); err != nil {
+		log.Errorf("unable to iterate owned recipes for user %s: %s", userId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
 
 	deleteVaultQuery := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE user_id=$1
 	`, vaultKeysTable)
 
-	_, err = tx.Exec(deleteVaultQuery, userId)
+	_, err = tx.ExecContext(ctx, deleteVaultQuery, userId)
 	if err != nil {
 		log.Warnf("unable to delete profile %s encrypted vault: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
@@ -137,7 +143,7 @@ func (r *Repository) deleteVaultWithOwnedRecipeKeys(userId uuid.UUID, tx *sql.Tx
 		WHERE recipe_id=ANY($1)
 	`, recipeKeysTable)
 
-	if _, err = tx.Exec(deleteOwnedRecipesQuery, ownedRecipeIds); err != nil {
+	if _, err = tx.ExecContext(ctx, deleteOwnedRecipesQuery, ownedRecipeIds); err != nil {
 		log.Errorf("unable to delete owned recipe keys for user %s: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}

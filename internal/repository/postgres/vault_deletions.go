@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -8,7 +9,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
 )
 
-func (r *Repository) CreateVaultDeletionRequest(userId uuid.UUID) (string, error) {
+func (r *Repository) CreateVaultDeletionRequest(ctx context.Context, userId uuid.UUID) (string, error) {
 	var deleteCode string
 
 	getExistingDeleteCodeQuery := fmt.Sprintf(`
@@ -17,7 +18,7 @@ func (r *Repository) CreateVaultDeletionRequest(userId uuid.UUID) (string, error
 		WHERE user_id=$1
 	`, vaultDeletionsTable)
 
-	if err := r.db.Get(&deleteCode, getExistingDeleteCodeQuery, userId); err == nil {
+	if err := r.db.GetContext(ctx, &deleteCode, getExistingDeleteCodeQuery, userId); err == nil {
 		log.Infof("found existing vault delete code for user %s", userId)
 		return deleteCode, nil
 	}
@@ -29,7 +30,7 @@ func (r *Repository) CreateVaultDeletionRequest(userId uuid.UUID) (string, error
 		VALUES ($1, $2)
 	`, vaultDeletionsTable)
 
-	if _, err := r.db.Exec(createDeleteCodeQuery, userId, deleteCode); err != nil {
+	if _, err := r.db.ExecContext(ctx, createDeleteCodeQuery, userId, deleteCode); err != nil {
 		log.Errorf("error while creating vault delete code for user %s: %s", userId, err)
 		return "", fail.GrpcUnknown
 	}

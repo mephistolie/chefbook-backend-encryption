@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -9,7 +10,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-encryption/internal/entity"
 )
 
-func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKeyRequest {
+func (r *Repository) GetRecipeKeyRequests(ctx context.Context, recipeId uuid.UUID) []entity.RecipeKeyRequest {
 	var requests []entity.RecipeKeyRequest
 
 	query := fmt.Sprintf(`
@@ -22,7 +23,7 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKey
 			%[1]v.recipe_id=$1 AND %[1]v.status<>'%[3]v'
 	`, recipeKeysTable, vaultKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	rows, err := r.db.Query(query, recipeId)
+	rows, err := r.db.QueryContext(ctx, query, recipeId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -30,6 +31,7 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKey
 		log.Warnf("unable to get recipe %s key requests: %s", recipeId, err)
 		return []entity.RecipeKeyRequest{}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		request := entity.RecipeKeyRequest{}
@@ -43,11 +45,15 @@ func (r *Repository) GetRecipeKeyRequests(recipeId uuid.UUID) []entity.RecipeKey
 
 		requests = append(requests, request)
 	}
+	if err = rows.Err(); err != nil {
+		log.Warnf("unable to iterate recipe %s key requests: %s", recipeId, err)
+		return []entity.RecipeKeyRequest{}
+	}
 
 	return requests
 }
 
-func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
+func (r *Repository) GetRecipeKey(ctx context.Context, recipeId, userId uuid.UUID) *[]byte {
 	var key *[]byte
 
 	query := fmt.Sprintf(`
@@ -56,7 +62,7 @@ func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 		WHERE recipe_id=$1 AND user_id=$2
 	`, recipeKeysTable)
 
-	row := r.db.QueryRow(query, recipeId, userId)
+	row := r.db.QueryRowContext(ctx, query, recipeId, userId)
 	if err := row.Scan(&key); err != nil {
 		log.Debugf("unable to get recipe %s key for user %s: %s", recipeId, userId, err)
 	}
@@ -64,13 +70,13 @@ func (r *Repository) GetRecipeKey(recipeId, userId uuid.UUID) *[]byte {
 	return key
 }
 
-func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) error {
+func (r *Repository) CreateRecipeKeyAccessRequest(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id)
 		VALUES ($1, $2)
 	`, recipeKeysTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -81,13 +87,13 @@ func (r *Repository) CreateRecipeKeyAccessRequest(recipeId, userId uuid.UUID) er
 	return nil
 }
 
-func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) error {
+func (r *Repository) SetRecipeAuthorKey(ctx context.Context, recipeId, userId uuid.UUID, key []byte) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, key, status)
 		VALUES ($1, $2, $3, '%s')
 	`, recipeKeysTable, entity.RecipeKeyRequestStatusOwned)
 
-	if _, err := r.db.Exec(query, recipeId, userId, key); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId, key); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -98,14 +104,14 @@ func (r *Repository) SetRecipeAuthorKey(recipeId, userId uuid.UUID, key []byte) 
 	return nil
 }
 
-func (r *Repository) GrantRecipeKeyAccessForUser(recipeId, userId uuid.UUID, key []byte) error {
+func (r *Repository) GrantRecipeKeyAccessForUser(ctx context.Context, recipeId, userId uuid.UUID, key []byte) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
 		SET key=$3, status='approved'
 		WHERE recipe_id=$1 AND user_id=$2
 	`, recipeKeysTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId, key); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId, key); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}
@@ -116,14 +122,14 @@ func (r *Repository) GrantRecipeKeyAccessForUser(recipeId, userId uuid.UUID, key
 	return nil
 }
 
-func (r *Repository) DeclineRecipeKeyAccessForUser(recipeId, userId uuid.UUID) error {
+func (r *Repository) DeclineRecipeKeyAccessForUser(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
 		SET key=null, status='declined'
 		WHERE recipe_id=$1 AND user_id=$2
 	`, recipeKeysTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		if isUniqueViolationError(err) {
 			return nil
 		}

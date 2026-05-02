@@ -14,7 +14,7 @@ const (
 	recipeKeyMaxLength = 1000
 )
 
-func (s *EncryptionServer) GetRecipeKeyRequests(_ context.Context, req *api.GetRecipeKeyRequestsRequest) (*api.GetRecipeKeyRequestsResponse, error) {
+func (s *EncryptionServer) GetRecipeKeyRequests(ctx context.Context, req *api.GetRecipeKeyRequestsRequest) (*api.GetRecipeKeyRequestsResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -24,7 +24,7 @@ func (s *EncryptionServer) GetRecipeKeyRequests(_ context.Context, req *api.GetR
 		return nil, fail.GrpcInvalidBody
 	}
 
-	requests, err := s.service.GetRecipeKeyRequests(recipeId, userId)
+	requests, err := s.service.GetRecipeKeyRequests(ctx, recipeId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *EncryptionServer) GetRecipeKeyRequests(_ context.Context, req *api.GetR
 	return &api.GetRecipeKeyRequestsResponse{Requests: response}, nil
 }
 
-func (s *EncryptionServer) GetRecipeKey(_ context.Context, req *api.GetRecipeKeyRequest) (*api.GetRecipeKeyResponse, error) {
+func (s *EncryptionServer) GetRecipeKey(ctx context.Context, req *api.GetRecipeKeyRequest) (*api.GetRecipeKeyResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -58,7 +58,7 @@ func (s *EncryptionServer) GetRecipeKey(_ context.Context, req *api.GetRecipeKey
 		return nil, fail.GrpcInvalidBody
 	}
 
-	key := s.service.GetRecipeKey(recipeId, userId)
+	key := s.service.GetRecipeKey(ctx, recipeId, userId)
 	var response []byte
 	if key != nil {
 		response = *key
@@ -67,7 +67,7 @@ func (s *EncryptionServer) GetRecipeKey(_ context.Context, req *api.GetRecipeKey
 	return &api.GetRecipeKeyResponse{EncryptedKey: response}, nil
 }
 
-func (s *EncryptionServer) RequestRecipeKeyAccess(_ context.Context, req *api.RequestRecipeKeyAccessRequest) (*api.RequestRecipeKeyAccessResponse, error) {
+func (s *EncryptionServer) RequestRecipeKeyAccess(ctx context.Context, req *api.RequestRecipeKeyAccessRequest) (*api.RequestRecipeKeyAccessResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -77,14 +77,14 @@ func (s *EncryptionServer) RequestRecipeKeyAccess(_ context.Context, req *api.Re
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.RequestRecipeKeyAccess(recipeId, userId); err != nil {
+	if err = s.service.RequestRecipeKeyAccess(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.RequestRecipeKeyAccessResponse{Message: "recipe key access requested"}, nil
 }
 
-func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKeyRequest) (*api.SetRecipeKeyResponse, error) {
+func (s *EncryptionServer) SetRecipeKey(ctx context.Context, req *api.SetRecipeKeyRequest) (*api.SetRecipeKeyResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -110,14 +110,14 @@ func (s *EncryptionServer) SetRecipeKey(_ context.Context, req *api.SetRecipeKey
 		return nil, fail.GrpcPremiumRequired
 	}
 
-	if err = s.service.SetRecipeKey(recipeId, userId, req.EncryptedKey, requesterId); err != nil {
+	if err = s.service.SetRecipeKey(ctx, recipeId, userId, req.EncryptedKey, requesterId); err != nil {
 		return nil, err
 	}
 
 	return &api.SetRecipeKeyResponse{Message: "recipe key set"}, nil
 }
 
-func (s *EncryptionServer) DeleteRecipeKey(_ context.Context, req *api.DeleteRecipeKeyRequest) (*api.DeleteRecipeKeyResponse, error) {
+func (s *EncryptionServer) DeleteRecipeKey(ctx context.Context, req *api.DeleteRecipeKeyRequest) (*api.DeleteRecipeKeyResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -131,7 +131,7 @@ func (s *EncryptionServer) DeleteRecipeKey(_ context.Context, req *api.DeleteRec
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.DeleteRecipeUserKey(recipeId, userId, requesterId); err != nil {
+	if err = s.service.DeleteRecipeUserKey(ctx, recipeId, userId, requesterId); err != nil {
 		return nil, err
 	}
 

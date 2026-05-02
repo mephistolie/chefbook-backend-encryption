@@ -18,24 +18,24 @@ const (
 	vaultPrivateKeyMaxLength = 5000
 )
 
-func (s *EncryptionServer) HasEncryptedVault(_ context.Context, req *api.HasEncryptedVaultRequest) (*api.HasEncryptedVaultResponse, error) {
+func (s *EncryptionServer) HasEncryptedVault(ctx context.Context, req *api.HasEncryptedVaultRequest) (*api.HasEncryptedVaultResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	hasEncryptedVault := s.service.HasEncryptedVault(userId)
+	hasEncryptedVault := s.service.HasEncryptedVault(ctx, userId)
 
 	return &api.HasEncryptedVaultResponse{HasEncryptedVault: hasEncryptedVault}, nil
 }
 
-func (s *EncryptionServer) GetEncryptedVaultKey(_ context.Context, req *api.GetEncryptedVaultKeyRequest) (*api.GetEncryptedVaultKeyResponse, error) {
+func (s *EncryptionServer) GetEncryptedVaultKey(ctx context.Context, req *api.GetEncryptedVaultKeyRequest) (*api.GetEncryptedVaultKeyResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	vault := s.service.GetEncryptedVault(userId)
+	vault := s.service.GetEncryptedVault(ctx, userId)
 	var keyBytes []byte
 	var saltBytes []byte
 	if vault.PrivateKey != nil {
@@ -51,7 +51,7 @@ func (s *EncryptionServer) GetEncryptedVaultKey(_ context.Context, req *api.GetE
 	}, nil
 }
 
-func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.CreateEncryptedVaultRequest) (*api.CreateEncryptedVaultResponse, error) {
+func (s *EncryptionServer) CreateEncryptedVault(ctx context.Context, req *api.CreateEncryptedVaultRequest) (*api.CreateEncryptedVaultResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -76,7 +76,7 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 		return nil, encryptionFail.GrpcInvalidPublicKey
 	}
 
-	err = s.service.CreateEncryptedVault(entity.EncryptedVault{
+	err = s.service.CreateEncryptedVault(ctx, entity.EncryptedVault{
 		UserId:     userId,
 		PublicKey:  &req.PublicKey,
 		PrivateKey: &req.EncryptedPrivateKey,
@@ -89,13 +89,13 @@ func (s *EncryptionServer) CreateEncryptedVault(_ context.Context, req *api.Crea
 	return &api.CreateEncryptedVaultResponse{Message: "encrypted vault created"}, nil
 }
 
-func (s *EncryptionServer) RequestEncryptedVaultDeletion(_ context.Context, req *api.RequestEncryptedVaultDeletionRequest) (*api.RequestEncryptedVaultDeletionResponse, error) {
+func (s *EncryptionServer) RequestEncryptedVaultDeletion(ctx context.Context, req *api.RequestEncryptedVaultDeletionRequest) (*api.RequestEncryptedVaultDeletionResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	err = s.service.RequestEncryptedVaultDeletion(userId)
+	err = s.service.RequestEncryptedVaultDeletion(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +103,13 @@ func (s *EncryptionServer) RequestEncryptedVaultDeletion(_ context.Context, req 
 	return &api.RequestEncryptedVaultDeletionResponse{Message: "encrypted vault deletion requested"}, nil
 }
 
-func (s *EncryptionServer) DeleteEncryptedVault(_ context.Context, req *api.DeleteEncryptedVaultRequest) (*api.DeleteEncryptedVaultResponse, error) {
+func (s *EncryptionServer) DeleteEncryptedVault(ctx context.Context, req *api.DeleteEncryptedVaultRequest) (*api.DeleteEncryptedVaultResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil || !entity.IsDeleteCode(req.DeleteCode) {
 		return nil, encryptionFail.GrpcInvalidCode
 	}
 
-	err = s.service.DeleteEncryptedVault(userId, req.DeleteCode)
+	err = s.service.DeleteEncryptedVault(ctx, userId, req.DeleteCode)
 	if err != nil {
 		return nil, err
 	}

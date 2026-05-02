@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
@@ -8,8 +9,8 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (r *Repository) DeleteProfile(userId, messageId uuid.UUID) error {
-	tx, err := r.handleMessageIdempotently(messageId)
+func (r *Repository) DeleteProfile(ctx context.Context, userId, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(ctx, messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -18,15 +19,15 @@ func (r *Repository) DeleteProfile(userId, messageId uuid.UUID) error {
 		}
 	}
 
-	if err = r.deleteVaultWithOwnedRecipeKeys(userId, tx); err != nil {
+	if err = r.deleteVaultWithOwnedRecipeKeys(ctx, userId, tx); err != nil {
 		return err
 	}
 
 	return commitTransaction(tx)
 }
 
-func (r *Repository) DeleteRecipeKeys(recipeId, messageId uuid.UUID) error {
-	tx, err := r.handleMessageIdempotently(messageId)
+func (r *Repository) DeleteRecipeKeys(ctx context.Context, recipeId, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(ctx, messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -40,7 +41,7 @@ func (r *Repository) DeleteRecipeKeys(recipeId, messageId uuid.UUID) error {
 		WHERE recipe_id=$1
 	`, recipeKeysTable)
 
-	if _, err = tx.Exec(query, recipeId); err != nil {
+	if _, err = tx.ExecContext(ctx, query, recipeId); err != nil {
 		log.Warnf("unable to delete recipe %s key: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -48,8 +49,8 @@ func (r *Repository) DeleteRecipeKeys(recipeId, messageId uuid.UUID) error {
 	return commitTransaction(tx)
 }
 
-func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) handleMessageIdempotently(ctx context.Context, messageId uuid.UUID) (*sql.Tx, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		VALUES ($1)
 	`, inboxTable)
 
-	if _, err = tx.Exec(addMessageQuery, messageId); err != nil {
+	if _, err = tx.ExecContext(ctx, addMessageQuery, messageId); err != nil {
 		if !isUniqueViolationError(err) {
 			log.Error("unable to add message to inbox: ", err)
 		}
@@ -77,7 +78,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		)
 	`, inboxTable)
 
-	if _, err = tx.Exec(deleteOutdatedMessagesQuery); err != nil {
+	if _, err = tx.ExecContext(ctx, deleteOutdatedMessagesQuery); err != nil {
 		return nil, errorWithTransactionRollback(tx, err)
 	}
 

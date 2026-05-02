@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	mq "github.com/mephistolie/chefbook-backend-common/mq/dependencies"
 	mqPublisher "github.com/mephistolie/chefbook-backend-common/mq/publisher"
@@ -19,17 +21,17 @@ type Service struct {
 }
 
 type Encryption interface {
-	HasEncryptedVault(userId uuid.UUID) bool
-	GetEncryptedVault(userId uuid.UUID) entity.EncryptedVault
-	CreateEncryptedVault(key entity.EncryptedVault) error
-	RequestEncryptedVaultDeletion(userId uuid.UUID) error
-	DeleteEncryptedVault(userId uuid.UUID, deleteCode string) error
+	HasEncryptedVault(ctx context.Context, userId uuid.UUID) bool
+	GetEncryptedVault(ctx context.Context, userId uuid.UUID) entity.EncryptedVault
+	CreateEncryptedVault(ctx context.Context, key entity.EncryptedVault) error
+	RequestEncryptedVaultDeletion(ctx context.Context, userId uuid.UUID) error
+	DeleteEncryptedVault(ctx context.Context, userId uuid.UUID, deleteCode string) error
 
-	GetRecipeKeyRequests(recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error)
-	GetRecipeKey(recipeId, userId uuid.UUID) *[]byte
-	RequestRecipeKeyAccess(recipeId, userId uuid.UUID) error
-	SetRecipeKey(recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error
-	DeleteRecipeUserKey(recipeId, userId, requesterId uuid.UUID) error
+	GetRecipeKeyRequests(ctx context.Context, recipeId uuid.UUID, userId uuid.UUID) ([]entity.RecipeKeyRequest, error)
+	GetRecipeKey(ctx context.Context, recipeId, userId uuid.UUID) *[]byte
+	RequestRecipeKeyAccess(ctx context.Context, recipeId, userId uuid.UUID) error
+	SetRecipeKey(ctx context.Context, recipeId, userId uuid.UUID, key []byte, requesterId uuid.UUID) error
+	DeleteRecipeUserKey(ctx context.Context, recipeId, userId, requesterId uuid.UUID) error
 }
 
 func New(
