@@ -24,11 +24,12 @@ func NewService(
 
 func (s *Service) HandleMessage(msg model.MessageData) error {
 	log.Infof("processing message %s with type %s", msg.Id, msg.Type)
+	ctx := context.Background()
 	switch msg.Type {
 	case recipe.MsgTypeRecipeDeleted:
-		return s.handleRecipeDeletedMsg(context.Background(), msg.Id, msg.Body)
+		return s.handleRecipeDeletedMsg(ctx, msg.Id, msg.Body)
 	case auth.MsgTypeProfileDeleted:
-		return s.handleProfileDeletedMsg(context.Background(), msg.Id, msg.Body)
+		return s.handleProfileDeletedMsg(ctx, msg.Id, msg.Body)
 	default:
 		log.Warnf("got unsupported message type %s for message %s", msg.Type, msg.Id)
 		return errors.New("not implemented")

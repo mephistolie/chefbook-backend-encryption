@@ -24,7 +24,8 @@ func (s *Service) RequestEncryptedVaultDeletion(ctx context.Context, userId uuid
 	deleteCode, err := s.repo.CreateVaultDeletionRequest(ctx, userId)
 	if err == nil {
 		go func() {
-			info, err := s.grpc.Auth.GetAuthInfo(context.Background(), &api.GetAuthInfoRequest{Id: userId.String()})
+			ctx := context.WithoutCancel(ctx)
+			info, err := s.grpc.Auth.GetAuthInfo(ctx, &api.GetAuthInfoRequest{Id: userId.String()})
 			if err == nil {
 				s.mail.SendEncryptedVaultDeletionMail(info.Email, deleteCode)
 			}
