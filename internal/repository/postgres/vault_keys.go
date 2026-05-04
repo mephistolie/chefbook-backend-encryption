@@ -91,7 +91,7 @@ func (r *Repository) ConfirmEncryptedVaultDeletion(ctx context.Context, userId u
 		return nil, errorWithTransactionRollback(tx, err)
 	}
 
-	msg, err := r.addOutboxVaultDeletedMsg(userId, tx)
+	msg, err := r.addOutboxVaultDeletedMsg(ctx, userId, tx)
 	if err != nil {
 		return nil, errorWithTransactionRollback(tx, err)
 	}
@@ -151,7 +151,7 @@ func (r *Repository) deleteVaultWithOwnedRecipeKeys(ctx context.Context, userId 
 	return nil
 }
 
-func (r *Repository) addOutboxVaultDeletedMsg(userId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
+func (r *Repository) addOutboxVaultDeletedMsg(ctx context.Context, userId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
 	msgBody := api.MsgBodyVaultDeleted{UserId: userId}
 	msgBodyBson, err := json.Marshal(msgBody)
 	if err != nil {
@@ -165,5 +165,5 @@ func (r *Repository) addOutboxVaultDeletedMsg(userId uuid.UUID, tx *sql.Tx) (*mo
 		Body:     msgBodyBson,
 	}
 
-	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
+	return &msgInfo, r.createOutboxMsg(ctx, &msgInfo, tx)
 }
