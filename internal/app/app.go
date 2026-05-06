@@ -19,7 +19,7 @@ import (
 )
 
 func Run(cfg *config.Config) {
-	log.Init(*cfg.LogsPath, *cfg.Environment == config.EnvDev)
+	log.InitWithService("encryption", *cfg.LogsPath, *cfg.Environment == config.EnvDev)
 	cfg.Print()
 
 	db, err := postgres.Connect(cfg.Database)
